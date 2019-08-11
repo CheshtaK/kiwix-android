@@ -12,6 +12,7 @@ import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.wifi.WifiConfiguration;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
@@ -22,7 +23,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
-import android.os.Bundle;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -38,11 +38,19 @@ import com.google.android.gms.location.LocationSettingsResponse;
 import com.google.android.gms.location.LocationSettingsStates;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.tasks.Task;
+import io.reactivex.Observer;
+import io.reactivex.disposables.Disposable;
 import java.lang.reflect.Method;
+import javax.inject.Inject;
+import org.kiwix.kiwixlib.JNIKiwixException;
+import org.kiwix.kiwixlib.JNIKiwixLibrary;
+import org.kiwix.kiwixlib.JNIKiwixServer;
 import org.kiwix.kiwixmobile.R;
 import org.kiwix.kiwixmobile.base.BaseActivity;
+import org.kiwix.kiwixmobile.database.newdb.dao.NewBookDao;
 import org.kiwix.kiwixmobile.wifi_hotspot.HotspotService;
 import org.kiwix.kiwixmobile.zim_manager.fileselect_view.ZimFileSelectFragment;
+import org.kiwix.kiwixmobile.zim_manager.fileselect_view.adapter.BooksOnDiskListItem;
 
 import static org.kiwix.kiwixmobile.utils.StyleUtils.dialogStyle;
 import static org.kiwix.kiwixmobile.webserver.WebServerHelper.getAddress;
@@ -55,6 +63,8 @@ public class ZimHostActivity extends BaseActivity implements
   Button startServerButton;
   @BindView(R.id.server_textView)
   TextView serverTextView;
+
+  @Inject NewBookDao bookDao;
 
   public static final String ACTION_TURN_ON_AFTER_O = "Turn_on_hotspot_after_oreo";
   public static final String ACTION_TURN_OFF_AFTER_O = "Turn_off_hotspot_after_oreo";
@@ -69,8 +79,10 @@ public class ZimHostActivity extends BaseActivity implements
   HotspotService hotspotService;
   String ip;
   boolean bound;
-  String TAG = ZimHostActivity.this.getClass().getSimpleName();
+  String TAG = "ZimHostActivity";
   ServiceConnection serviceConnection;
+  JNIKiwixLibrary kiwixLibrary = new JNIKiwixLibrary();
+  JNIKiwixServer kiwixServer = new JNIKiwixServer(kiwixLibrary);
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -179,6 +191,7 @@ public class ZimHostActivity extends BaseActivity implements
       startServerButton.setText(getString(R.string.stop_server_label));
       startServerButton.setBackgroundColor(getResources().getColor(R.color.stopServer));
     }
+    Log.d(TAG, "resumed");
   }
 
   // This method checks if mobile data is enabled in user's device.
@@ -381,12 +394,55 @@ public class ZimHostActivity extends BaseActivity implements
     startServerButton.setText(getString(R.string.stop_server_label));
     startServerButton.setBackgroundColor(getResources().getColor(R.color.stopServer));
     isServerStarted = true;
+
+    Log.d(TAG, "server started");
+    bookDao.books()
+      .toObservable()
+      .flatMapIterable(it -> it)
+      .take(3) // to terminate the stream otherwise onComplete will not be called
+      .subscribe(new Observer<BooksOnDiskListItem.BookOnDisk>() {
+
+        @Override public void onSubscribe(Disposable d) {
+
+        }
+
+        @Override public void onNext(BooksOnDiskListItem.BookOnDisk bookOnDisk) {
+          try {
+            Log.d(TAG, "Book added: " + bookOnDisk.getBook().toString());
+            Log.d(TAG, "Book id: " + bookOnDisk.getBook().id);
+            Log.d(TAG, "Book url: " + bookOnDisk.getBook().url + "\n");
+            Log.d(TAG, "Book path: " + bookOnDisk.getFile().getPath());
+            Log.d(TAG, "Book absolute path: " + bookOnDisk.getFile().getAbsolutePath());
+            boolean bookAdded = kiwixLibrary.addBook(bookOnDisk.getFile().getAbsolutePath());
+            //boolean bookAdded = kiwixLibrary.addBook("/storage/emulated/0/Kiwix/vikidia_en_all_nopic_2019-05.zim");
+            Log.d(TAG, "book added: " + bookAdded);
+          } catch (JNIKiwixException e) {
+            Log.e(TAG, "unable to add books");
+          }
+        }
+
+        @Override public void onError(Throwable t) {
+          Log.e(TAG, "error loading books", t);
+        }
+
+        @Override public void onComplete() {
+          Log.d(TAG, "On complete");
+
+          String ip = getAddress().substring(7);
+          Log.d(TAG, "ip is " + ip);
+          kiwixServer.setPort(8080);
+          //kiwixServer.setAddress(ip);
+          boolean started = kiwixServer.start();
+          Log.d(TAG, "started: " + started);
+        }
+      });
   }
 
   @Override public void serverStopped() {
     serverTextView.setText(getString(R.string.server_textview_default_message));
     startServerButton.setText(getString(R.string.start_server_label));
     startServerButton.setBackgroundColor(getResources().getColor(R.color.greenTick));
+    kiwixServer.stop();
     isServerStarted = false;
   }
 
