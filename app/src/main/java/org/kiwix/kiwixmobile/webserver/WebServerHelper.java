@@ -7,7 +7,6 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Enumeration;
-import org.jetbrains.annotations.NotNull;
 import org.kiwix.kiwixlib.JNIKiwixException;
 import org.kiwix.kiwixlib.JNIKiwixLibrary;
 import org.kiwix.kiwixlib.JNIKiwixServer;
@@ -111,9 +110,10 @@ public class WebServerHelper {
     return ip;
   }
 
-  @NotNull static String getIpAddress() {
+  @NonNull static String getIpAddress() {
     String ip = getIp();
-    if (ip == null) return "";
+    Log.d(TAG, "IP: " + ip);
+    if (ip == null || ip.length() < 5) return "";
     ip = ip.replaceAll("\n", "");
     return "http://" + ip + ":" + port;
   }

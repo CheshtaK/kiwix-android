@@ -38,6 +38,7 @@ import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.tasks.Task;
 import io.reactivex.Flowable;
 import io.reactivex.SingleObserver;
+import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
 import java.io.File;
 import java.lang.reflect.Method;
@@ -394,13 +395,14 @@ public class ZimHostActivity extends BaseActivity implements
           ProgressDialog.show(this, getString(R.string.progress_dialog_starting_server), "",
               true);
       progressDialog.show();
-      Flowable.timer(1, TimeUnit.SECONDS)
-          .timeout(15, TimeUnit.SECONDS)
+      Flowable.interval(1, TimeUnit.SECONDS)
           .map(second -> getIpAddress())
           //Using ip.length()>5 here because ip has an extra linespace because of which it is never equal to null.
           //So we check its length.
           .filter(ip -> !ip.isEmpty())
+          .timeout(10, TimeUnit.SECONDS)
           .firstOrError()
+          .observeOn(AndroidSchedulers.mainThread())
           .subscribe(new SingleObserver<String>() {
             @Override public void onSubscribe(Disposable d) {
             }
@@ -408,6 +410,7 @@ public class ZimHostActivity extends BaseActivity implements
             @Override public void onSuccess(String s) {
               progressDialog.dismiss();
               startService(ACTION_START_SERVER);
+              Log.d(TAG,"onSuccess:  "+s);
             }
 
             @Override public void onError(Throwable e) {
@@ -415,7 +418,7 @@ public class ZimHostActivity extends BaseActivity implements
               progressDialog.dismiss();
               Toast.makeText(ZimHostActivity.this, "Hotspot not turned on", Toast.LENGTH_SHORT)
                   .show();
-              //Toast hotspot not turned on
+              Log.d(TAG, "Unable to turn on server", e);
             }
           });
     });
