@@ -7,6 +7,7 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import org.jetbrains.annotations.NotNull;
 import org.kiwix.kiwixlib.JNIKiwixException;
 import org.kiwix.kiwixlib.JNIKiwixLibrary;
 import org.kiwix.kiwixlib.JNIKiwixServer;
@@ -35,7 +36,7 @@ public class WebServerHelper {
     // 2. Ask user to change port in settings if port is in use.
     // OR
     // Always use 8080 and when its not available then iterate this number.
-    String ip = getIpAddress();
+    String ip = getIp();
     ip = ip.replaceAll("\n", "");
     if (ip.length() == 0) {
       zimHostCallbacks.onServerFailedToStart();
@@ -75,7 +76,7 @@ public class WebServerHelper {
   }
 
   // get Ip address of the device's wireless access point i.e. wifi hotspot OR wifi network
-  private static String getIpAddress() {
+  private static String getIp() {
     String ip = "";
     try {
       Enumeration<NetworkInterface> enumNetworkInterfaces = NetworkInterface
@@ -110,11 +111,10 @@ public class WebServerHelper {
     return ip;
   }
 
-  @NonNull public static String getAddress() {
-    return "http://" + getIpAddress() + ":" + port;
-  }
-
-  public static String isIpAddressValid() {
-    return getIpAddress().replaceAll("\n", "");
+  @NotNull static String getIpAddress() {
+    String ip = getIp();
+    if (ip == null) return "";
+    ip = ip.replaceAll("\n", "");
+    return "http://" + ip + ":" + port;
   }
 }

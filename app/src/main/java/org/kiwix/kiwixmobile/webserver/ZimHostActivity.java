@@ -58,8 +58,7 @@ import org.kiwix.kiwixmobile.zim_manager.fileselect_view.adapter.BooksOnDiskAdap
 import org.kiwix.kiwixmobile.zim_manager.fileselect_view.adapter.BooksOnDiskListItem;
 
 import static org.kiwix.kiwixmobile.utils.StyleUtils.dialogStyle;
-import static org.kiwix.kiwixmobile.webserver.WebServerHelper.getAddress;
-import static org.kiwix.kiwixmobile.webserver.WebServerHelper.isIpAddressValid;
+import static org.kiwix.kiwixmobile.webserver.WebServerHelper.getIpAddress;
 import static org.kiwix.kiwixmobile.webserver.WebServerHelper.isServerStarted;
 
 public class ZimHostActivity extends BaseActivity implements
@@ -250,8 +249,7 @@ public class ZimHostActivity extends BaseActivity implements
     super.onResume();
     presenter.loadBooks();
     if (isServerStarted) {
-      ip = getAddress();
-      ip = ip.replaceAll("\n", "");
+      ip = getIpAddress();
       serverTextView.setText(getString(R.string.server_started_message, ip));
       startServerButton.setText(getString(R.string.stop_server_label));
       startServerButton.setBackgroundColor(getResources().getColor(R.color.stopServer));
@@ -398,12 +396,10 @@ public class ZimHostActivity extends BaseActivity implements
       progressDialog.show();
       Flowable.timer(1, TimeUnit.SECONDS)
           .timeout(15, TimeUnit.SECONDS)
-          .map(second -> {
-            return isIpAddressValid();
-          })
+          .map(second -> getIpAddress())
           //Using ip.length()>5 here because ip has an extra linespace because of which it is never equal to null.
           //So we check its length.
-          .filter(ip -> ip.length() > 5)
+          .filter(ip -> !ip.isEmpty())
           .firstOrError()
           .subscribe(new SingleObserver<String>() {
             @Override public void onSubscribe(Disposable d) {
