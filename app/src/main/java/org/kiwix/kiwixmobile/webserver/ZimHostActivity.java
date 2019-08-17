@@ -250,10 +250,14 @@ public class ZimHostActivity extends BaseActivity implements
     super.onResume();
     presenter.loadBooks();
     if (isServerStarted) {
-      ip = getIpAddress();
-      serverTextView.setText(getString(R.string.server_started_message, ip));
-      startServerButton.setText(getString(R.string.stop_server_label));
-      startServerButton.setBackgroundColor(getResources().getColor(R.color.stopServer));
+      try {
+        ip = getIpAddress();
+        serverTextView.setText(getString(R.string.server_started_message, ip));
+        startServerButton.setText(getString(R.string.stop_server_label));
+        startServerButton.setBackgroundColor(getResources().getColor(R.color.stopServer));
+      } catch (IllegalStateException e) {
+        // write the code here for the case if you don't find an ip
+      }
     }
   }
 
@@ -395,11 +399,8 @@ public class ZimHostActivity extends BaseActivity implements
           ProgressDialog.show(this, getString(R.string.progress_dialog_starting_server), "",
               true);
       progressDialog.show();
-      Flowable.interval(1, TimeUnit.SECONDS)
-          .map(second -> getIpAddress())
-          //Using ip.length()>5 here because ip has an extra linespace because of which it is never equal to null.
-          //So we check its length.
-          .filter(ip -> !ip.isEmpty())
+      Flowable.fromCallable(WebServerHelper::getIpAddress)
+          .retryWhen(error -> error.delay(1, TimeUnit.SECONDS))
           .timeout(10, TimeUnit.SECONDS)
           .firstOrError()
           .observeOn(AndroidSchedulers.mainThread())

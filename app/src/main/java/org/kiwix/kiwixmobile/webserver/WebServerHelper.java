@@ -113,7 +113,7 @@ public class WebServerHelper {
   @NonNull static String getIpAddress() {
     String ip = getIp();
     Log.d(TAG, "IP: " + ip);
-    if (ip == null || ip.length() < 5) return "";
+    if (ip == null || ip.length() < 5) throw new IllegalStateException();
     ip = ip.replaceAll("\n", "");
     return "http://" + ip + ":" + port;
   }
