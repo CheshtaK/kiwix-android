@@ -113,4 +113,8 @@ public class WebServerHelper {
   @NonNull public static String getAddress() {
     return "http://" + getIpAddress() + ":" + port;
   }
+
+  public static String isIpAddressValid() {
+    return getIpAddress().replaceAll("\n", "");
+  }
 }

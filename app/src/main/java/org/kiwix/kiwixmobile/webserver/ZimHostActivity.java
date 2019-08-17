@@ -36,10 +36,14 @@ import com.google.android.gms.location.LocationSettingsResponse;
 import com.google.android.gms.location.LocationSettingsStates;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.tasks.Task;
+import io.reactivex.Flowable;
+import io.reactivex.SingleObserver;
+import io.reactivex.disposables.Disposable;
 import java.io.File;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
@@ -55,6 +59,7 @@ import org.kiwix.kiwixmobile.zim_manager.fileselect_view.adapter.BooksOnDiskList
 
 import static org.kiwix.kiwixmobile.utils.StyleUtils.dialogStyle;
 import static org.kiwix.kiwixmobile.webserver.WebServerHelper.getAddress;
+import static org.kiwix.kiwixmobile.webserver.WebServerHelper.isIpAddressValid;
 import static org.kiwix.kiwixmobile.webserver.WebServerHelper.isServerStarted;
 
 public class ZimHostActivity extends BaseActivity implements
@@ -391,11 +396,32 @@ public class ZimHostActivity extends BaseActivity implements
           ProgressDialog.show(this, getString(R.string.progress_dialog_starting_server), "",
               true);
       progressDialog.show();
-      final Handler handler = new Handler();
-      handler.postDelayed(() -> {
-        progressDialog.dismiss();
-        startService(ACTION_START_SERVER);
-      }, 7000);
+      Flowable.timer(1, TimeUnit.SECONDS)
+          .timeout(15, TimeUnit.SECONDS)
+          .map(second -> {
+            return isIpAddressValid();
+          })
+          //Using ip.length()>5 here because ip has an extra linespace because of which it is never equal to null.
+          //So we check its length.
+          .filter(ip -> ip.length() > 5)
+          .firstOrError()
+          .subscribe(new SingleObserver<String>() {
+            @Override public void onSubscribe(Disposable d) {
+            }
+
+            @Override public void onSuccess(String s) {
+              progressDialog.dismiss();
+              startService(ACTION_START_SERVER);
+            }
+
+            @Override public void onError(Throwable e) {
+              // display the ip and don't forget to dismiss the dialog
+              progressDialog.dismiss();
+              Toast.makeText(ZimHostActivity.this, "Hotspot not turned on", Toast.LENGTH_SHORT)
+                  .show();
+              //Toast hotspot not turned on
+            }
+          });
     });
 
     builder.setTitle(getString(R.string.hotspot_dialog_title));
@@ -406,7 +432,7 @@ public class ZimHostActivity extends BaseActivity implements
     dialog.show();
   }
 
-  private void startService(String ACTION) {
+  void startService(String ACTION) {
     if (ACTION.equals(ACTION_START_SERVER)) {
       serviceIntent.putStringArrayListExtra(SELECTED_ZIM_PATHS_KEY, selectedBooksPath);
     }
