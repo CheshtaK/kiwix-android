@@ -17,7 +17,12 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
+import javax.inject.Inject;
+import javax.inject.Scope;
+import org.jetbrains.annotations.NotNull;
+import org.kiwix.kiwixmobile.KiwixApplication;
 import org.kiwix.kiwixmobile.R;
+import org.kiwix.kiwixmobile.di.components.ServiceComponent;
 import org.kiwix.kiwixmobile.utils.Constants;
 import org.kiwix.kiwixmobile.webserver.ZimHostCallbacks;
 import org.kiwix.kiwixmobile.webserver.WebServerHelper;
@@ -35,7 +40,7 @@ import static org.kiwix.kiwixmobile.webserver.ZimHostActivity.SELECTED_ZIM_PATHS
  * Created by Adeel Zafar on 07/01/2019.
  */
 
-public class HotspotService extends Service {
+public class HotspotService extends Service implements ServiceComponent {
   private static final int HOTSPOT_NOTIFICATION_ID = 666;
   private static final String ACTION_STOP = "hotspot_stop";
   private static final String TAG = "HotspotService";
@@ -45,10 +50,13 @@ public class HotspotService extends Service {
   private NotificationCompat.Builder builder;
   private ZimHostCallbacks zimHostCallbacks;
   private final IBinder serviceBinder = new HotspotBinder();
-  private WebServerHelper webServerHelper;
+
+  @Inject
+  WebServerHelper webServerHelper;
+
 
   @Override public void onCreate() {
-
+    KiwixApplication.getApplicationComponent().ServiceComponent.service(this).build().inject(this);
     super.onCreate();
 
     hotspotManager = new WifiHotspotManager(this);
@@ -63,8 +71,6 @@ public class HotspotService extends Service {
     };
 
     registerReceiver(stopReceiver, new IntentFilter(ACTION_STOP));
-
-    webServerHelper = new WebServerHelper();
 
     notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
   }
