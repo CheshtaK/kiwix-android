@@ -4,30 +4,26 @@ import dagger.Module
 import dagger.Provides
 import org.kiwix.kiwixlib.JNIKiwixLibrary
 import org.kiwix.kiwixlib.JNIKiwixServer
+import org.kiwix.kiwixmobile.di.ServiceScope
 import org.kiwix.kiwixmobile.webserver.WebServerHelper
-import javax.inject.Singleton
 
 @Module
 class ServiceModule {
 
   @Provides
-  @Singleton
-  fun providesWebServerHelper(): WebServerHelper {
-    return WebServerHelper(
-      providesJNIKiwixLibrary(),
-      providesJNIKiwixServer(providesJNIKiwixLibrary())
-    )
-  }
+  @ServiceScope
+  fun providesWebServerHelper(
+    jniKiwixLibrary: JNIKiwixLibrary,
+    kiwixServer: KiwixServer
+  ): WebServerHelper = WebServerHelper(jniKiwixLibrary, kiwixServer)
 
   @Provides
-  @Singleton
-  fun providesJNIKiwixLibrary(): JNIKiwixLibrary {
-    return JNIKiwixLibrary()
-  }
+  @ServiceScope
+  fun providesJNIKiwixLibrary(): JNIKiwixLibrary = JNIKiwixLibrary()
 
   @Provides
-  @Singleton
-  fun providesJNIKiwixServer(jniKiwixLibrary: JNIKiwixLibrary): JNIKiwixServer {
-    return JNIKiwixServer(jniKiwixLibrary)
-  }
+  @ServiceScope
+  fun providesJNIKiwixServer(jniKiwixLibrary: JNIKiwixLibrary): JNIKiwixServer =
+    JNIKiwixServer(jniKiwixLibrary)
 }
+

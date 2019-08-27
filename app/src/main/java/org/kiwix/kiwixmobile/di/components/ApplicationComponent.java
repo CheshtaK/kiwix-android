@@ -35,10 +35,10 @@ import org.kiwix.kiwixmobile.zim_manager.DownloadNotificationClickedReceiver;
 
 @Singleton
 @Component(modules = {
-    ApplicationModule.class,
-    NetworkModule.class,
-    JNIModule.class,
-    DataModule.class
+  ApplicationModule.class,
+  NetworkModule.class,
+  JNIModule.class,
+  DataModule.class
 })
 public interface ApplicationComponent {
 
@@ -51,6 +51,8 @@ public interface ApplicationComponent {
   }
 
   ActivityComponent.Builder activityComponent();
+
+  ServiceComponent.Builder serviceComponent();
 
   void inject(KiwixApplication application);
 

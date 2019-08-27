@@ -10,7 +10,6 @@ import java.util.Enumeration;
 import javax.inject.Inject;
 import org.kiwix.kiwixlib.JNIKiwixException;
 import org.kiwix.kiwixlib.JNIKiwixLibrary;
-import org.kiwix.kiwixlib.JNIKiwixServer;
 
 /**
  * WebServerHelper class is used to set up the suitable environment i.e. getting the
@@ -20,12 +19,6 @@ import org.kiwix.kiwixlib.JNIKiwixServer;
 
 public class WebServerHelper {
 
-  //@Inject
-  //JNIKiwixLibrary kiwixLibrary;
-  //
-  //@Inject
-  //JNIKiwixServer kiwixServer;
-
   private static final String TAG = "WebServerHelper";
   public static boolean isServerStarted;
   private static int port;
@@ -33,7 +26,7 @@ public class WebServerHelper {
   private JNIKiwixLibrary kiwixLibrary;
   private JNIKiwixServer kiwixServer;
 
-  @Inject public WebServerHelper(JNIKiwixLibrary kiwixLibrary,JNIKiwixServer kiwixServer) {
+  @Inject public WebServerHelper(JNIKiwixLibrary kiwixLibrary, JNIKiwixServer kiwixServer) {
     this.kiwixLibrary = kiwixLibrary;
     this.kiwixServer = kiwixServer;
   }
@@ -85,12 +78,12 @@ public class WebServerHelper {
     String ip = "";
     try {
       Enumeration<NetworkInterface> enumNetworkInterfaces = NetworkInterface
-          .getNetworkInterfaces();
+        .getNetworkInterfaces();
       while (enumNetworkInterfaces.hasMoreElements()) {
         NetworkInterface networkInterface = enumNetworkInterfaces
-            .nextElement();
+          .nextElement();
         Enumeration<InetAddress> enumInetAddress = networkInterface
-            .getInetAddresses();
+          .getInetAddresses();
         while (enumInetAddress.hasMoreElements()) {
           InetAddress inetAddress = enumInetAddress.nextElement();
 
@@ -120,7 +113,6 @@ public class WebServerHelper {
     String address = "http://" + getIpAddress() + ":" + port;
     address = address.replaceAll("\n", "");
     return address;
-
   }
 
   public static String getIp() {
