@@ -14,7 +14,7 @@ class ServiceModule {
   @ServiceScope
   fun providesWebServerHelper(
     jniKiwixLibrary: JNIKiwixLibrary,
-    kiwixServer: KiwixServer
+    kiwixServer: JNIKiwixServer
   ): WebServerHelper = WebServerHelper(jniKiwixLibrary, kiwixServer)
 
   @Provides
@@ -26,4 +26,3 @@ class ServiceModule {
   fun providesJNIKiwixServer(jniKiwixLibrary: JNIKiwixLibrary): JNIKiwixServer =
     JNIKiwixServer(jniKiwixLibrary)
 }
-

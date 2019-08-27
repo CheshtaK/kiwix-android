@@ -10,6 +10,7 @@ import java.util.Enumeration;
 import javax.inject.Inject;
 import org.kiwix.kiwixlib.JNIKiwixException;
 import org.kiwix.kiwixlib.JNIKiwixLibrary;
+import org.kiwix.kiwixlib.JNIKiwixServer;
 
 /**
  * WebServerHelper class is used to set up the suitable environment i.e. getting the
